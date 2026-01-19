@@ -299,23 +299,26 @@ const AdminSettings = ({ initialSection }) => {
              
              {/* Add User Form - OWNER ONLY */}
              {user.role === 'owner' && (
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '0.5rem', marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--bg-body)', borderRadius: 'var(--radius)' }}>
+             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 1fr) minmax(140px, 1fr) auto', gap: '0.75rem', marginBottom: '1.5rem', alignItems: 'center' }}>
                  <input 
                     placeholder="Username"
                     value={newUser.username}
                     onChange={e => setNewUser({...newUser, username: e.target.value})}
-                    style={{ padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                    className="form-control"
+                    style={{ padding: '0.6rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'white' }}
                  />
                  <input 
                     placeholder="Password"
                     value={newUser.password}
                     onChange={e => setNewUser({...newUser, password: e.target.value})}
-                    style={{ padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                    className="form-control"
+                    style={{ padding: '0.6rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'white' }}
                  />
                  <select
                     value={newUser.role}
                     onChange={e => setNewUser({...newUser, role: e.target.value})}
-                    style={{ padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                    className="form-select"
+                    style={{ padding: '0.6rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'white' }}
                  >
                      <option value="admin">Admin (Doctor)</option>
                      <option value="assistant">Assistant</option>
@@ -326,9 +329,10 @@ const AdminSettings = ({ initialSection }) => {
                     title="Expiration Date"
                     value={newUser.expiration}
                     onChange={e => setNewUser({...newUser, expiration: e.target.value})}
-                    style={{ padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                    className="form-control"
+                    style={{ padding: '0.6rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'white' }}
                  />
-                 <button onClick={handleAddUser} className="btn btn-primary" title="Add User"><Plus size={16}/></button>
+                 <button onClick={handleAddUser} className="btn" title="Add User" style={{ width: '42px', height: '42px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', backgroundColor: '#0090e7', color: 'white', border: 'none' }}><Plus size={24}/></button>
              </div>
              )}
 
@@ -525,7 +529,7 @@ const AdminSettings = ({ initialSection }) => {
 
         {/* 2.5 All Patients Database - OWNER & ADMIN */}
         {(user.role === 'owner' || user.role === 'admin') && (
-        <div className="card" style={{ marginBottom: '2rem' }}>
+        <div id="database" className="card" style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Database size={20} /> All Patients Database
             </h3>
@@ -575,28 +579,32 @@ const AdminSettings = ({ initialSection }) => {
                             .sort((a,b) => new Date(b.date || '9999-12-31') - new Date(a.date || '9999-12-31')) // Newest first
                             .map(r => (
                                 <tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                    <td style={{ padding: '0.75rem' }}>{r.date || 'N/A'}</td>
-                                    <td style={{ padding: '0.75rem', fontWeight: '500' }}>{r.childName}</td>
-                                    <td style={{ padding: '0.75rem' }}>{r.phone}</td>
+                                    <td style={{ padding: '0.75rem', fontWeight: '400', color: 'var(--text-main)' }}>{r.date || 'N/A'}</td>
+                                    <td style={{ padding: '0.75rem', fontWeight: '500', color: 'var(--text-main)' }}>{r.childName}</td>
+                                    <td style={{ padding: '0.75rem', color: 'var(--text-main)' }}>{r.phone}</td>
                                     <td style={{ padding: '0.75rem' }}>
                                         <span style={{ 
-                                            padding: '0.1rem 0.5rem', 
+                                            padding: '0.25rem 0.75rem', 
                                             borderRadius: '4px',
                                             fontSize: '0.75rem',
-                                            backgroundColor: r.status === 'completed' ? 'var(--success)' : 
-                                                             r.status === 'cancelled' || r.status === 'no-show' ? '#fee2e2' : // Light Red for cancelled/no-show
-                                                             'var(--primary)',
+                                            fontWeight: '700',
+                                            backgroundColor: r.status === 'completed' ? '#00b865' : // Green
+                                                             r.status === 'active' || r.status === 'emergency' ? '#0090e7' : // Blue
+                                                             'white', // Changed for Cancelled
                                             color: r.status === 'completed' ? 'white' : 
-                                                   r.status === 'cancelled' || r.status === 'no-show' ? 'var(--danger)' : 
-                                                   'white',
-                                            border: (r.status === 'cancelled' || r.status === 'no-show') ? '1px solid var(--danger)' : 'none'
+                                                   r.status === 'active' || r.status === 'emergency' ? 'white' : 
+                                                   '#ff4d4f', // Red text for cancelled
+                                            border: (r.status === 'cancelled' || r.status === 'no-show') ? '1px solid #ff4d4f' : 'none',
+                                            display: 'inline-block',
+                                            minWidth: '80px',
+                                            textAlign: 'center'
                                         }}>
                                             {r.status?.toUpperCase() || 'ACTIVE'}
                                         </span>
                                     </td>
                                     <td style={{ padding: '0.75rem' }}>
                                         {r.mapsUrl ? (
-                                            <a href={r.mapsUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--secondary)', textDecoration: 'none', fontWeight: 'bold' }}>
+                                            <a href={r.mapsUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#00b865', textDecoration: 'none', fontWeight: '600', fontSize: '0.85rem' }}>
                                                 <MapPin size={14} /> Open Map
                                             </a>
                                         ) : (
@@ -615,9 +623,9 @@ const AdminSettings = ({ initialSection }) => {
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--bg-surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
                  <div style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>Total: {reservations.length}</div>
                  <div style={{ width: '1px', background: 'var(--border)' }}></div>
-                 <div style={{ color: 'var(--success)' }}>Completed: {reservations.filter(r => r.status === 'completed').length}</div>
-                 <div style={{ color: 'var(--primary)' }}>Active: {reservations.filter(r => r.status === 'active' || r.status === 'emergency').length}</div>
-                 <div style={{ color: 'var(--danger)' }}>Cancelled/No-Show: {reservations.filter(r => r.status === 'cancelled' || r.status === 'no-show').length}</div>
+                 <div style={{ color: '#00b865', fontWeight: '500' }}>Completed: {reservations.filter(r => r.status === 'completed').length}</div>
+                 <div style={{ color: '#0090e7', fontWeight: '500' }}>Active: {reservations.filter(r => r.status === 'active' || r.status === 'emergency').length}</div>
+                 <div style={{ color: '#ff4d4f', fontWeight: '500' }}>Cancelled/No-Show: {reservations.filter(r => r.status === 'cancelled' || r.status === 'no-show').length}</div>
             </div>
         </div>
         )}

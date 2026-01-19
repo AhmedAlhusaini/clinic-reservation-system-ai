@@ -359,7 +359,7 @@ const Dashboard = ({ onNavigate }) => {
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '0.5rem', textAlign: 'center' }}>Drag Emergency Cases Here</p>
                          ) : (
                             emergencyReservations.map(res => (
-                              <DraggablePatient key={res.id} reservation={res} onDelete={handleDelete} onEdit={handleEdit} />
+                              <DraggablePatient key={res.id} reservation={res} onDelete={handleDelete} onEdit={handleEdit} onComplete={handleComplete} />
                             ))
                          )}
                      </SortableContext>

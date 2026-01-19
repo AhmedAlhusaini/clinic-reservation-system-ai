@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { MapPin, User, Phone, Baby, Sparkles, Calendar, Clock, Loader, AlertCircle } from 'lucide-react';
+import { MapPin, User, Phone, Baby, Sparkles, Calendar, Clock, Loader, AlertCircle, FileText } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
 import { useReservations } from '../context/ReservationContext';
 import { findNextAvailableSlot } from '../utils/scheduler';
@@ -51,7 +51,14 @@ const PatientForm = ({ onSubmit, initialData, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.childName || !formData.phone) return; 
+    if (!formData.childName || !formData.phone) return;
+    
+    // Basic Phone Validation
+    const phoneRegex = /^[0-9+\-\s()]*$/;
+    if (!phoneRegex.test(formData.phone) || formData.phone.length < 5) {
+        alert("Please enter a valid phone number (digits only)."); 
+        return;
+    }
     
     // Merge suggestion if present
     const finalData = {
@@ -105,6 +112,12 @@ const PatientForm = ({ onSubmit, initialData, onCancel }) => {
   const clearSuggestion = () => {
       setSuggestedSlot(null);
       setSearchError(null);
+  };
+
+  const [showNotes, setShowNotes] = useState(!!(initialData?.notes));
+
+  const toggleNotes = () => {
+      setShowNotes(prev => !prev);
   };
 
   return (
@@ -184,6 +197,31 @@ const PatientForm = ({ onSubmit, initialData, onCancel }) => {
                 placeholder="Area, Street..."
                 style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
              />
+          </div>
+
+          <div style={{ gridColumn: '1 / -1' }}>
+             <button
+                type="button"
+                onClick={toggleNotes}
+                style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+             >
+                <FileText size={14} /> {showNotes ? 'Hide Notes' : 'Add Notes / Details'}
+             </button>
+             {showNotes && (
+                 <div id="details-section">
+                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>
+                        {defaultLabels?.notes || 'Notes / Diagnosis'}
+                     </label>
+                     <textarea
+                        name="notes"
+                        value={formData.notes || ''}
+                        onChange={handleChange}
+                        placeholder="Enter diagnosis or notes..."
+                        rows={2}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontFamily: 'inherit' }}
+                     />
+                 </div>
+             )}
           </div>
 
           {/* Custom Fields */}
