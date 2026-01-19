@@ -19,7 +19,8 @@ This application serves as the central hub for a clinic's daily workflow:
     - **Admin (Doctor)**: View schedule, manage clinical notes, reset staff passwords.
     - **Assistant**: Register patients, manage reservations, mark attendance.
 - **Patient Cards**: High-contrast, scannable cards with "Phone Badges" for quick contact visibility.
-- **Data Persistence**: Automatically saves all state to the browser's LocalStorage.
+- **Data Persistence**: Automatically saves all state to the browser's LocalStorage, ensuring no data loss on refresh.
+- **Safety First**: Confirmation prompts for critical actions (Settings, Reset) to prevent accidents.
 
 ## 🛠️ Technology Stack
 
@@ -62,7 +63,10 @@ The system initializes with the following default users (for testing):
 
 ## 📅 Release History
 
-- **v1.7.4 (Current)**: Simplified Dashboard Modal, Phone Badge UI, Performance Tuning.
+See [CHANGELOG.md](./doc/CHANGELOG.md) for full details.
+
+- **v2.0.0 (Current)**: "Robustness & Reliability". Added Persistence, Safety Warnings, and full History tracking.
+- **v1.7.4**: Simplified Dashboard Modal, Phone Badge UI, Performance Tuning.
 - **v1.5 - v1.6**: Core UI Overhaul, completed section, branding tools.
 - **v1.0**: MVP Foundation (Registration & Basic Drag-and-Drop).
 

@@ -12,6 +12,13 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
+    
+    // Strict Validation: Username and Password Required
+    if (!username.trim() || !password.trim()) {
+        setError('Please enter both username and password.');
+        return;
+    }
+
     const success = login(role, password, username);
     if (!success) {
       setError('Invalid credentials.');

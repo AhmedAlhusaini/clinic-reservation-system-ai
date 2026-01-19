@@ -9,40 +9,31 @@ export const useReservations = () => {
 };
 
 export const ReservationProvider = ({ children }) => {
-    const [reservations, setReservations] = useState([]);
+    const [reservations, setReservations] = useState(() => {
+        const stored = localStorage.getItem('clinic_reservations');
+        return stored ? JSON.parse(stored) : [];
+    });
     const [currentDate, setCurrentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
-    // Load from local storage and check date
-    useEffect(() => {
-        const storedRes = localStorage.getItem('clinic_reservations');
-        const storedDate = localStorage.getItem('clinic_date');
-        
-        if (storedDate && storedRes) {
-            // Check if stored date is today
-            if (storedDate === format(new Date(), 'yyyy-MM-dd')) {
-                 setReservations(JSON.parse(storedRes));
-            } else {
-                 // New day, clear reservations
-                 localStorage.removeItem('clinic_reservations');
-                 localStorage.setItem('clinic_date', format(new Date(), 'yyyy-MM-dd'));
-                 setReservations([]);
-            }
-        } else {
-             localStorage.setItem('clinic_date', format(new Date(), 'yyyy-MM-dd'));
-        }
-    }, []);
+    // Load from local storage - REMOVED redundant effect
+    // useEffect(() => {
+    //     const storedRes = localStorage.getItem('clinic_reservations');
+    //     if (storedRes) {
+    //         setReservations(JSON.parse(storedRes));
+    //     }
+    // }, []);
 
     // Save to local storage whenever reservations change
     useEffect(() => {
-        if (reservations.length > 0) {
-            localStorage.setItem('clinic_reservations', JSON.stringify(reservations));
-        }
+        // We always save, even if empty, to ensure state persistence
+        localStorage.setItem('clinic_reservations', JSON.stringify(reservations));
     }, [reservations]);
 
-    const addReservation = (patientData) => {
+    const addReservation = (patientData, appointmentDate) => {
         const newReservation = {
             id: Date.now().toString(),
             ...patientData,
+            date: appointmentDate || format(new Date(), 'yyyy-MM-dd'), // Default to today if not specified
             status: 'active', // active, cancelled, no-show, completed
             statusReason: null,
             timeSlot: patientData.timeSlot || null, 

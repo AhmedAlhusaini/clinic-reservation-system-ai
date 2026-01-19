@@ -1,12 +1,44 @@
 import React, { useState } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
+import { useReservations } from '../context/ReservationContext';
 import { useToast } from '../context/ToastContext';
-import { Trash2, Plus, Save, AlertTriangle, Settings, Users, KeyRound, Key } from 'lucide-react';
+import { Calendar, Trash2, Plus, Save, AlertTriangle, Settings, Users, Key, Clock, Edit, MapPin, Database, XCircle } from 'lucide-react';
 
-const AdminSettings = () => {
-  const { customFields, addField, removeField, clinicName, updateClinicName, logo, updateLogo, subTitle, updateSubTitle } = useConfig();
+const AdminSettings = ({ initialSection }) => {
+    // Auto-scroll effect
+    React.useEffect(() => {
+        if (initialSection) {
+            let attempts = 0;
+            const interval = setInterval(() => {
+                const el = document.getElementById(initialSection);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Highlight effect
+                    el.style.transition = 'box-shadow 0.3s';
+                    el.style.boxShadow = '0 0 0 4px var(--primary-light)';
+                    setTimeout(() => el.style.boxShadow = 'none', 1000);
+                    clearInterval(interval);
+                }
+                attempts++;
+                if (attempts > 20) clearInterval(interval); // Stop after 2 seconds
+            }, 100);
+            return () => clearInterval(interval);
+        }
+    }, [initialSection]);
+
+  const { 
+      customFields, addField, removeField, 
+      clinicName, updateClinicName, 
+      logo, updateLogo, 
+      subTitle, updateSubTitle,
+      workingDays, startHour, endHour, updateSchedule, maxPatientsPerSlot,
+      exceptions, updateException,
+      defaultLabels, updateDefaultLabel
+  } = useConfig();
+  
   const { user, users, addUser, removeUser, updateUser } = useAuth();
+  const { reservations } = useReservations(); // Access all data
   const { showToast } = useToast();
   
   const [newFieldLabel, setNewFieldLabel] = useState('');
@@ -14,10 +46,32 @@ const AdminSettings = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [nameInput, setNameInput] = useState(clinicName);
   const [subTitleInput, setSubTitleInput] = useState(subTitle);
+  const [searchTerm, setSearchTerm] = useState(''); // New Search State
+  
+  // Schedule Local State
+  const [days, setDays] = useState(workingDays || []);
+  const [sHour, setSHour] = useState(startHour || '15:00');
+  const [eHour, setEHour] = useState(endHour || '22:00');
+  const [maxP, setMaxP] = useState(maxPatientsPerSlot || 5);
+
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'assistant', expiration: '' });
 
+  const allDays = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
+  const handleSaveSchedule = () => {
+      updateSchedule(days, sHour, eHour, maxP);
+      showToast('Schedule settings saved', 'success');
+  };
+
+  const toggleDay = (day) => {
+      if (days.includes(day)) {
+          setDays(days.filter(d => d !== day));
+      } else {
+          setDays([...days, day]);
+      }
+  };
+
   const handleAddUser = () => {
-    // ... (existing)
     if (newUser.username && newUser.password) {
         if (users.some(u => u.username === newUser.username)) {
             showToast('Username already exists', 'error');
@@ -32,7 +86,6 @@ const AdminSettings = () => {
   };
 
   const handleAddField = () => {
-    // ...
     if (newFieldLabel.trim()) {
         addField(newFieldLabel);
         setNewFieldLabel('');
@@ -65,8 +118,6 @@ const AdminSettings = () => {
      }
   };
 
-  // ... (rest)
-
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         <h2 style={{ marginBottom: '2rem' }}>Settings</h2>
@@ -75,7 +126,7 @@ const AdminSettings = () => {
         {user.role === 'owner' && (
         <div className="card" style={{ marginBottom: '2rem', border: '1px solid var(--primary)' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
-                <Settings size={20} /> General (Owner Only)
+                <Settings size={20} /> Branding (Owner Only)
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -96,7 +147,7 @@ const AdminSettings = () => {
                             style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                         />
                     </div>
-                    <button onClick={handleUpdateName} className="btn btn-primary" style={{ alignSelf: 'start', marginTop: '1rem' }}>Save Settings</button>
+                    <button onClick={handleUpdateName} className="btn btn-primary" style={{ alignSelf: 'start', marginTop: '1rem' }}>Save Branding</button>
                 </div>
                 
                 <div>
@@ -133,8 +184,113 @@ const AdminSettings = () => {
         </div>
         )}
 
+        {/* 0.5 Schedule Settings - OWNER & ADMIN */}
+        {(user.role === 'owner' || user.role === 'admin') && (
+        <div className="card" style={{ marginBottom: '2rem', border: '1px solid var(--secondary)' }}>
+            <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--secondary)' }}>
+                <Clock size={20} /> Schedule Configuration
+            </h3>
+            <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Working Days:</label>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {allDays.map(day => (
+                        <button 
+                            key={day} 
+                            onClick={() => toggleDay(day)}
+                            className="btn"
+                            style={{ 
+                                backgroundColor: days.includes(day) ? 'var(--secondary)' : 'var(--bg-body)',
+                                color: days.includes(day) ? 'white' : 'var(--text-main)',
+                                borderColor: days.includes(day) ? 'var(--secondary)' : 'var(--border)'
+                            }}
+                        >
+                            {day}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '2rem', marginBottom: '1rem' }}>
+                <div>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Start Hour:</label>
+                     <input 
+                        type="time" 
+                        value={sHour}
+                        onChange={(e) => setSHour(e.target.value)}
+                        style={{ padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                     />
+                </div>
+                <div>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>End Hour:</label>
+                     <input 
+                        type="time" 
+                        value={eHour}
+                        onChange={(e) => setEHour(e.target.value)}
+                        style={{ padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                     />
+                </div>
+                <div>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Max Patients/Slot:</label>
+                     <input 
+                        type="number" 
+                        min="1"
+                        max="20"
+                        value={maxP}
+                        onChange={(e) => setMaxP(e.target.value)}
+                        style={{ padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', width: '80px' }}
+                     />
+                </div>
+            </div>
+            
+            <div style={{ padding: '1rem', border: '1px dashed var(--secondary)', borderRadius: 'var(--radius)', marginBottom: '1rem', backgroundColor: 'var(--bg-surface)' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--secondary)' }}>Exceptions & Overrides</h4>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Manually open or close specific dates (e.g. holidays).</p>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                        type="date"
+                        id="exception-date"
+                        style={{ padding: '0.25rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                    />
+                    <button onClick={() => {
+                        const d = document.getElementById('exception-date').value;
+                        if(d) updateException(d, 'open');
+                    }} className="btn btn-sm" style={{ fontSize: '0.8rem', backgroundColor: 'var(--success)', color: 'white', border: 'none' }}>Force Open</button>
+                    
+                    <button onClick={() => {
+                        const d = document.getElementById('exception-date').value;
+                        if(d) updateException(d, 'closed');
+                    }} className="btn btn-sm" style={{ fontSize: '0.8rem', backgroundColor: 'var(--danger)', color: 'white', border: 'none' }}>Force Close</button>
+                </div>
+                
+                {/* List current exceptions */}
+                <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    {Object.entries(exceptions || {}).map(([date, status]) => (
+                        <div key={date} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', padding: '0.25rem', background: 'var(--bg-body)', borderRadius: '4px' }}>
+                            <span>{date}: <strong>{status.toUpperCase()}</strong></span>
+                            <button onClick={() => updateException(date, null)} style={{ border: 'none', background: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>x</button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <button 
+                onClick={() => {
+                    const confirmed = window.confirm(
+                        "⚠️ ATTENTION: Changing schedule settings (especially Start/End hours) may misalign or clear existing slot records for today.\n\nAre you sure you want to proceed?"
+                    );
+                    if (confirmed) {
+                        handleSaveSchedule();
+                    }
+                }} 
+                className="btn" 
+                style={{ backgroundColor: 'var(--secondary)', color: 'white', border: 'none', width: '100%' }}
+            >
+                Save Schedule Settings
+            </button>
+        </div>
+        )}
+
         {/* 1. User Management - OWNER & ADMIN */}
-        {/* Only Owner can ADD new users, but both can VIEW/EDIT */}
         {(user.role === 'owner' || user.role === 'admin') && (
         <div className="card" style={{ marginBottom: '2rem' }}>
              <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -228,7 +384,52 @@ const AdminSettings = () => {
         </div>
         )}
 
-        {/* 1. Form Editor - OWNER & ADMIN */}
+        {/* 1.5 Standard Field Labels - OWNER & ADMIN */}
+        {(user.role === 'owner' || user.role === 'admin') && (
+        <div className="card" style={{ marginBottom: '2rem' }}>
+            <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Edit size={20} /> Standard Field Labels
+            </h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>Rename the default fields on the patient form.</p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Child Name Label</label>
+                     <input 
+                        value={defaultLabels.childName}
+                        onChange={(e) => updateDefaultLabel('childName', e.target.value)}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                     />
+                </div>
+                 <div>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Parent Name Label</label>
+                     <input 
+                        value={defaultLabels.parentName}
+                        onChange={(e) => updateDefaultLabel('parentName', e.target.value)}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                     />
+                </div>
+                 <div>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Phone Label</label>
+                     <input 
+                        value={defaultLabels.phone}
+                        onChange={(e) => updateDefaultLabel('phone', e.target.value)}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                     />
+                </div>
+                 <div>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Notes Label</label>
+                     <input 
+                        value={defaultLabels.notes}
+                        onChange={(e) => updateDefaultLabel('notes', e.target.value)}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                     />
+                </div>
+            </div>
+        </div>
+        )}
+
+        {/* 2. Form Editor - OWNER & ADMIN */}
         {(user.role === 'owner' || user.role === 'admin') && (
         <div className="card" style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -236,14 +437,61 @@ const AdminSettings = () => {
             </h3>
             <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>Add extra questions to the patient registration form.</p>
             
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                <input 
-                    value={newFieldLabel}
-                    onChange={(e) => setNewFieldLabel(e.target.value)}
-                    placeholder="E.g. Symptoms, Notes, Age..."
-                    style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
-                />
-                <button onClick={handleAddField} className="btn btn-primary">Add Field</button>
+            {/* Form Editor */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '0.5rem', alignItems: 'end' }}>
+                    
+                    {/* Label */}
+                    <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Label</label>
+                        <input 
+                            value={newFieldLabel}
+                            onChange={(e) => setNewFieldLabel(e.target.value)}
+                            placeholder="E.g. Age"
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                        />
+                    </div>
+
+                    {/* Type */}
+                    <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Type</label>
+                         <select
+                            id="new-field-type"
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                         >
+                             <option value="text">Text</option>
+                             <option value="number">Number</option>
+                             <option value="select">Dropdown</option>
+                         </select>
+                    </div>
+
+                    {/* Required */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Required?</label>
+                        <input type="checkbox" id="new-field-required" style={{ marginTop: '0.7rem', transform: 'scale(1.2)' }} />
+                    </div>
+
+                    <button onClick={() => {
+                        const type = document.getElementById('new-field-type').value;
+                        const isRequired = document.getElementById('new-field-required').checked;
+                        // For select options, we could add a simple prompt/modal in future or complex UI. 
+                        // For now, let's keep it simple: If select, maybe prompt? Or simple input below.
+                        let options = [];
+                        if (type === 'select') {
+                            const optStr = prompt('Enter options separated by comma (e.g. Male, Female):');
+                            if (optStr) options = optStr.split(',').map(s => s.trim());
+                        }
+
+                        if (newFieldLabel.trim()) {
+                            addField(newFieldLabel, type, options, isRequired);
+                            setNewFieldLabel('');
+                            showToast('Field added', 'success');
+                            // Reset defaults
+                            document.getElementById('new-field-required').checked = false;
+                            document.getElementById('new-field-type').value = 'text';
+                        }
+                    }} className="btn btn-primary" style={{ marginBottom: '2px' }}>Add</button>
+                </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -256,12 +504,120 @@ const AdminSettings = () => {
                         justifyContent: 'space-between',
                         alignItems: 'center'
                     }}>
-                        <span>{field.label}</span>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            <span style={{ fontWeight: '600' }}>{field.label}</span>
+                            <span style={{ fontSize: '0.75rem', padding: '0.1rem 0.5rem', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '4px' }}>
+                                {field.type.toUpperCase()}
+                            </span>
+                            {field.required && <span style={{ fontSize: '0.7rem', color: 'var(--danger)', fontWeight: 'bold' }}>*Required</span>}
+                            {field.options && field.options.length > 0 && (
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>[{field.options.join(', ')}]</span>
+                            )}
+                        </div>
                         <button onClick={() => removeField(field.id)} style={{ color: 'var(--danger)', background: 'none' }}>
                             <Trash2 size={16} />
                         </button>
                     </div>
                 ))}
+            </div>
+        </div>
+        )}
+
+        {/* 2.5 All Patients Database - OWNER & ADMIN */}
+        {(user.role === 'owner' || user.role === 'admin') && (
+        <div className="card" style={{ marginBottom: '2rem' }}>
+            <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Database size={20} /> All Patients Database
+            </h3>
+            
+            <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+                 <div style={{ position: 'relative', flex: 1 }}>
+                    <input 
+                        type="text"
+                        placeholder="Search by Name, Phone, or ID..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ width: '100%', padding: '0.5rem', paddingRight: '2rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                    />
+                    {searchTerm && (
+                        <button 
+                            onClick={() => setSearchTerm('')}
+                            style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                        >
+                            <XCircle size={16} />
+                        </button>
+                    )}
+                 </div>
+            </div>
+            
+            <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                    <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-surface)', borderBottom: '2px solid var(--border)' }}>
+                        <tr>
+                            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Date</th>
+                            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Patient Name</th>
+                            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Phone</th>
+                            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Status</th>
+                            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {reservations
+                            .filter(r => {
+                                if (!searchTerm) return true;
+                                const lower = searchTerm.toLowerCase().trim();
+                                const name = (r.childName || '').toLowerCase();
+                                const parent = (r.parentName || '').toLowerCase();
+                                const phone = (r.phone || '').toLowerCase();
+                                const date = (r.date || '').toLowerCase();
+                                return name.includes(lower) || parent.includes(lower) || phone.includes(lower) || date.includes(lower);
+                            })
+                            .sort((a,b) => new Date(b.date || '9999-12-31') - new Date(a.date || '9999-12-31')) // Newest first
+                            .map(r => (
+                                <tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                                    <td style={{ padding: '0.75rem' }}>{r.date || 'N/A'}</td>
+                                    <td style={{ padding: '0.75rem', fontWeight: '500' }}>{r.childName}</td>
+                                    <td style={{ padding: '0.75rem' }}>{r.phone}</td>
+                                    <td style={{ padding: '0.75rem' }}>
+                                        <span style={{ 
+                                            padding: '0.1rem 0.5rem', 
+                                            borderRadius: '4px',
+                                            fontSize: '0.75rem',
+                                            backgroundColor: r.status === 'completed' ? 'var(--success)' : 
+                                                             r.status === 'cancelled' || r.status === 'no-show' ? '#fee2e2' : // Light Red for cancelled/no-show
+                                                             'var(--primary)',
+                                            color: r.status === 'completed' ? 'white' : 
+                                                   r.status === 'cancelled' || r.status === 'no-show' ? 'var(--danger)' : 
+                                                   'white',
+                                            border: (r.status === 'cancelled' || r.status === 'no-show') ? '1px solid var(--danger)' : 'none'
+                                        }}>
+                                            {r.status?.toUpperCase() || 'ACTIVE'}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: '0.75rem' }}>
+                                        {r.mapsUrl ? (
+                                            <a href={r.mapsUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--secondary)', textDecoration: 'none', fontWeight: 'bold' }}>
+                                                <MapPin size={14} /> Open Map
+                                            </a>
+                                        ) : (
+                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))
+                        }
+                        {reservations.length === 0 && <tr><td colSpan="5" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No records found.</td></tr>}
+                    </tbody>
+                </table>
+            </div>
+            
+            {/* Database Summary */}
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--bg-surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                 <div style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>Total: {reservations.length}</div>
+                 <div style={{ width: '1px', background: 'var(--border)' }}></div>
+                 <div style={{ color: 'var(--success)' }}>Completed: {reservations.filter(r => r.status === 'completed').length}</div>
+                 <div style={{ color: 'var(--primary)' }}>Active: {reservations.filter(r => r.status === 'active' || r.status === 'emergency').length}</div>
+                 <div style={{ color: 'var(--danger)' }}>Cancelled/No-Show: {reservations.filter(r => r.status === 'cancelled' || r.status === 'no-show').length}</div>
             </div>
         </div>
         )}

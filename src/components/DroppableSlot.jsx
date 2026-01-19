@@ -7,7 +7,7 @@ import { Plus } from 'lucide-react';
 
 const DroppableSlot = ({ timeLabel, assignedReservations = [], onDelete, onEdit, onQuickAdd, onComplete }) => {
   const { isOver, setNodeRef } = useDroppable({
-    id: timeLabel, 
+    id: `slot-${timeLabel}`, 
   });
 
   const style = {

@@ -34,12 +34,18 @@
 - [x] **Branding**: Logo Upload in Admin Settings <!-- id: 22 -->
 - [x] **UX**: Improved Drag from Archive logic <!-- id: 23 -->
 
-## Release 2: Smart Scheduling
+## Release 2.0: Robustness & Reliability (Completed)
+- [x] **Persistence**: Fix data loss on refresh (Context Lazy Init)
+- [x] **Safety**: Confirmation popups for critical Admin actions
+- [x] **Workflow**: Direct Drag & Drop from Emergency to Archive
+- [x] **Docs**: Centralized Changelog & History
+
+## Release 3: Smart Scheduling
 - [ ] Admin: Define working days/hours
 - [ ] Holiday API Integration
 - [ ] "Next Available Slot" Recommendation
 - [ ] Waitlist Feature
 
-## Release 3: Communication
+## Release 4: Communication
 - [ ] WhatsApp Integration (Link Generator)
 - [ ] Email Confirmation (Mock)

@@ -24,6 +24,7 @@ This application helps the clinic assistant manage daily patient reservations ef
 - **Delete**: Click the Trash icon.
 - **Complete**: Click the **Green Checkmark** on a scheduled patient to mark them as done. They will move to the Archive.
 - **Archive / History**: The box at the bottom left holds completed and cancelled patients.
+    - **Quick Archive**: Drag a patient directly from a time slot or "Emergency" zone to this box to remove them while keeping the record.
     - **Cancel**: Drag a patient here to remove them.
     - **Restore**: Drag a patient *out* of Archive back to "Unassigned" to restore them.
     - **Edit/Delete**: You can manage archived records just like active ones.
