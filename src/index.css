@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Modern Medical Palette */
+  --primary: #0ea5e9; /* Sky 500 */
+  --primary-hover: #0284c7; /* Sky 600 */
+  --primary-light: #e0f2fe; /* Sky 100 */
+
+  --secondary: #10b981; /* Emerald 500 */
+  --secondary-hover: #059669; /* Emerald 600 */
+
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --warning: #f59e0b;
+  --success: #22c55e;
+
+  --bg-body: #f8fafc; /* Slate 50 */
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
+
+  --text-main: #1e293b; /* Slate 800 */
+  --text-muted: #64748b; /* Slate 500 */
+  --text-light: #94a3b8; /* Slate 400 */
+
+  --border: #e2e8f0; /* Slate 200 */
+  
+  --radius: 0.75rem; /* Softer corners */
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+/* Utilities */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.btn:hover {
+  background: #fdf8f6; /* Very light warm tint */
+  transform: translateY(-1px);
+  border-color: #d6b4a8; /* Warm border */
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 6px -1px rgba(2, 132, 199, 0.3);
+}
+.btn-primary:hover {
+  /* User requested change from blue to "brown or sth like this" on hover */
+  background: linear-gradient(135deg, #aaddff 0%, #0044ff 100%); /* Wait, user said "from blue into whit , change this into brown" */
+  /* Actually, let's make it a distinct warm accent on hover to stand out */
+  background: linear-gradient(135deg, #b45309 0%, #78350f 100%); /* Amber/Brown 700-900 */
+  box-shadow: 0 6px 8px -1px rgba(180, 83, 9, 0.4);
+}
+
+.card {
+  background: var(--bg-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  transition: box-shadow 0.2s;
+}
+.card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.hidden {
+  display: none;
+}
