@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Stethoscope } from 'lucide-react';
 
 const Login = () => {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [role, setRole] = useState('admin');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -15,13 +17,13 @@ const Login = () => {
     
     // Strict Validation: Username and Password Required
     if (!username.trim() || !password.trim()) {
-        setError('Please enter both username and password.');
+        setError(t('pleaseEnterCreds'));
         return;
     }
 
     const success = login(role, password, username);
     if (!success) {
-      setError('Invalid credentials.');
+      setError(t('invalidCreds'));
     }
   };
 
@@ -64,13 +66,13 @@ const Login = () => {
                 <Stethoscope size={48} />
              </div>
           </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: '600' }}>Clinic Login</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Sign in to manage reservations</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '600' }}>{t('loginTitle')}</h1>
+          <p style={{ color: 'var(--text-muted)' }}>{t('loginSubtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Role</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>{t('role')}</label>
             <select 
               value={role} 
               onChange={(e) => setRole(e.target.value)}
@@ -82,14 +84,14 @@ const Login = () => {
                 outline: 'none'
               }}
             >
-                <option value="admin">Admin (Doctor)</option>
-                <option value="assistant">Assistant</option>
-                <option value="owner">Super Admin (Owner)</option>
+                <option value="admin">{t('roleAdmin')}</option>
+                <option value="assistant">{t('roleAssistant')}</option>
+                <option value="owner">{t('roleOwner')}</option>
             </select>
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Username</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>{t('username')}</label>
             <input
               type="text"
               value={username}
@@ -101,12 +103,12 @@ const Login = () => {
                 border: '1px solid var(--border)',
                 outline: 'none'
               }}
-              placeholder="Enter your username"
+              placeholder={t('enterUsername')}
             />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Password</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>{t('password')}</label>
             <input
               type="password"
               value={password}
@@ -118,7 +120,7 @@ const Login = () => {
                 border: '1px solid var(--border)',
                 outline: 'none'
               }}
-              placeholder="Enter password"
+              placeholder={t('enterPassword')}
             />
           </div>
 
@@ -140,7 +142,7 @@ const Login = () => {
             className="btn btn-primary"
             style={{ width: '100%' }}
           >
-            Sign In
+            {t('signIn')}
           </button>
         </form>
       </div>

@@ -4,10 +4,12 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import DraggablePatient from './DraggablePatient';
 
 import { Plus } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
-const DroppableSlot = ({ timeLabel, assignedReservations = [], onDelete, onEdit, onQuickAdd, onComplete }) => {
+const DroppableSlot = ({ timeLabel, slotId, assignedReservations = [], onDelete, onEdit, onQuickAdd, onComplete }) => {
+  const { t } = useLanguage();
   const { isOver, setNodeRef } = useDroppable({
-    id: `slot-${timeLabel}`, 
+    id: `slot-${slotId || timeLabel}`, 
   });
 
   const style = {
@@ -45,7 +47,7 @@ const DroppableSlot = ({ timeLabel, assignedReservations = [], onDelete, onEdit,
                 display: 'flex',
                 alignItems: 'center'
             }}
-            title="Quick Add Reservation"
+            title={t('quickAdd')}
         >
             <Plus size={16} />
         </button>
@@ -68,7 +70,7 @@ const DroppableSlot = ({ timeLabel, assignedReservations = [], onDelete, onEdit,
                 ))
             ) : (
                 <div style={{ color: 'var(--text-light)', fontSize: '0.875rem', fontStyle: 'italic', padding: '0.5rem' }}>
-                    Available
+                    {t('available')}
                 </div>
             )}
         </SortableContext>

@@ -8,6 +8,7 @@ import { DndContext, useSensor, useSensors, PointerSensor, useDroppable, DragOve
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import ScheduleBoard from '../components/ScheduleBoard';
 import DraggablePatient, { PatientCard } from '../components/DraggablePatient';
+import { useLanguage } from '../context/LanguageContext';
 
 const DroppableZone = ({ id, children, style }) => {
   const { setNodeRef } = useDroppable({ id });
@@ -21,6 +22,7 @@ const DroppableZone = ({ id, children, style }) => {
 const Dashboard = ({ onNavigate }) => {
   const { addReservation, reservations, updateReservation, removeReservation, reorderInSlot, updateStatus } = useReservations();
   const { showToast } = useToast();
+  const { t, language } = useLanguage();
   const [editingPatient, setEditingPatient] = useState(null);
   const [quickAddSlot, setQuickAddSlot] = useState(null);
   const [cancelModal, setCancelModal] = useState(null); // { id }
@@ -110,7 +112,7 @@ const Dashboard = ({ onNavigate }) => {
     if (targetZone === 'unassigned-zone') {
         updateStatus(patientId, 'active');
         updateReservation(patientId, { timeSlot: null });
-        showToast('Moved to Unassigned', 'success');
+        showToast(t('movedToUnassigned'), 'success');
         return;
     }
 
@@ -118,7 +120,7 @@ const Dashboard = ({ onNavigate }) => {
     if (targetZone === 'emergency-zone') {
         updateStatus(patientId, 'emergency'); 
         updateReservation(patientId, { timeSlot: null });
-        showToast('Moved to Emergency List', 'warning');
+        showToast(t('movedToEmergency'), 'warning');
         return;
     }
 
@@ -134,13 +136,13 @@ const Dashboard = ({ onNavigate }) => {
         if (activeRes.timeSlot !== targetSlot) {
              const currentInSlot = reservations.filter(r => isForDate(r, selectedDate) && r.timeSlot === targetSlot && r.status === 'active').length;
              if (currentInSlot >= MAX_PATIENTS_PER_SLOT) {
-                 showToast(`Slot ${targetSlot} is full (Max ${MAX_PATIENTS_PER_SLOT})`, 'error');
+                 showToast(t('slotFull', { max: MAX_PATIENTS_PER_SLOT }), 'error');
                  return;
              }
              // Do the move
              updateStatus(patientId, 'active');
              updateReservation(patientId, { timeSlot: targetSlot });
-             showToast(`Moved to ${targetSlot}`, 'success');
+             showToast(t('movedTo', { slot: targetSlot }), 'success');
         } else {
             // B. Reorder within same slot
             // Only reorder if we dropped ON another item (over.id !== slot container)
@@ -152,9 +154,9 @@ const Dashboard = ({ onNavigate }) => {
   };
 
   const handleDelete = (id) => {
-      if (window.confirm('Permanently delete this patient record?')) {
+      if (window.confirm(t('confirmDelete'))) {
           removeReservation(id);
-          showToast('Patient deleted', 'success');
+          showToast(t('patientDeleted'), 'success');
       }
   };
 
@@ -168,7 +170,8 @@ const Dashboard = ({ onNavigate }) => {
 
   const handleComplete = (id) => {
       updateStatus(id, 'completed');
-      showToast('Marked as Completed', 'success');
+      updateStatus(id, 'completed');
+      showToast(t('markComplete'), 'success'); // Reusing the key which is now "Mark as Examined" / "تم الكشف"
   };
 
   const handleConfirmCancel = (statusArg) => {
@@ -189,7 +192,7 @@ const Dashboard = ({ onNavigate }) => {
   const handleUpdatePatient = (data) => {
       if (editingPatient) {
           updateReservation(editingPatient.id, data);
-          showToast('Patient updated', 'success');
+          showToast(t('patientUpdated'), 'success');
           setEditingPatient(null);
       }
   };
@@ -209,9 +212,9 @@ const Dashboard = ({ onNavigate }) => {
 
     addReservation(data, targetDate);
     if (targetDate !== selectedDate) {
-        showToast(`Booked for ${targetDate}`, 'success');
+        showToast(t('bookedFor', { date: targetDate }), 'success');
     } else {
-        showToast('Patient added', 'success');
+        showToast(t('patientAdded'), 'success');
     }
     setQuickAddSlot(null);
   };
@@ -219,21 +222,25 @@ const Dashboard = ({ onNavigate }) => {
 
 
   // Live Clock State
-  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+  // Live Clock State
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' }));
 
   useEffect(() => {
+      // Update immediately on language change
+      setCurrentTime(new Date().toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' }));
+      
       const timer = setInterval(() => {
-          setCurrentTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+          setCurrentTime(new Date().toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' }));
       }, 1000);
       return () => clearInterval(timer);
-  }, []);
+  }, [language]);
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-             <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>Dashboard</h2>
+             <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>{t('dashboard')}</h2>
              
              <div style={{ display: 'flex', items: 'center', gap: '1.5rem' }}>
                 {/* Time & Day - Today Layout */}
@@ -244,14 +251,14 @@ const Dashboard = ({ onNavigate }) => {
                             const now = new Date();
                             const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                             if (selectedDate === todayStr) {
-                                return <span style={{ fontSize: '0.85rem', backgroundColor: 'var(--primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 'bold' }}>Today</span>;
+                                return <span style={{ fontSize: '0.85rem', backgroundColor: 'var(--primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 'bold' }}>{t('today')}</span>;
                             }
                             return null;
                     })()}
 
                     {/* Day Name */}
                     <div style={{ fontSize: '1.25rem', color: 'var(--text-main)', fontWeight: '600' }}>
-                        {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' })}
+                        {new Date(selectedDate).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long' })}
                     </div>
 
                     {/* Separator and Time */}
@@ -274,17 +281,17 @@ const Dashboard = ({ onNavigate }) => {
                 </div>
 
                 {/* Patient Count - Click to Navigate */}
-                <div 
-                    className="card" 
+                <div
+                    className="card"
                     onClick={() => onNavigate && onNavigate('settings', 'database')}
                     title="View All Patients Database"
                     style={{ padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border)', cursor: 'pointer', transition: 'all 0.2s', backgroundColor: 'var(--bg-surface)' }}
-                    onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
-                    onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
-                >
-                   <Users size={16} style={{ color: 'var(--primary)' }}/>
-                   <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>{dayReservations.length} Patients</span>
-                </div>
+                     onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                     onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                 >
+                    <Users size={16} style={{ color: 'var(--primary)' }}/>
+                    <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>{dayReservations.length} {t('patients')}</span>
+                 </div>
              </div>
           </div>
 
@@ -293,23 +300,23 @@ const Dashboard = ({ onNavigate }) => {
               const dayName = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short' });
               const isWorkingDay = workingDays.includes(dayName);
               const exception = exceptions[selectedDate];
-              
+
               const apiHoliday = publicHolidays?.find(h => h.date === selectedDate);
-              
+
               let statusText = null;
               let statusStyle = null;
 
               if (exception === 'closed') {
-                  statusText = '🏖️ Official Holiday / Closed';
+                  statusText = `🏖️ ${t('officialHoliday')}`;
                   statusStyle = { color: 'var(--danger)', fontWeight: 'bold' };
               } else if (exception === 'open') {
-                  statusText = '✅ Special Working Day';
+                  statusText = `✅ ${t('specialDay')}`;
                   statusStyle = { color: 'var(--success)', fontWeight: 'bold' };
               } else if (apiHoliday) {
                   statusText = `🎉 ${apiHoliday.localName || apiHoliday.name}`;
                   statusStyle = { color: 'var(--secondary)', fontWeight: 'bold' };
               } else if (!isWorkingDay) {
-                  statusText = '🏖️ Weekend / Off Day';
+                  statusText = `🏖️ ${t('weekend')}`;
                   statusStyle = { color: 'var(--text-muted)' };
               }
 
@@ -324,16 +331,16 @@ const Dashboard = ({ onNavigate }) => {
             {/* Left Col */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               <PatientForm onSubmit={handleAddPatient} />
-              
+
                {/* Unassigned */}
                <div className="card">
                   <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-                    Unassigned ({selectedDate})
+                    {t('unassigned')} ({new Date(selectedDate).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })})
                   </h3>
                   <DroppableZone id="unassigned-zone" style={{ minHeight: '100px', borderRadius: 'var(--radius)' }}>
                      <SortableContext items={unassignedReservations.map(r => r.id)} strategy={verticalListSortingStrategy}>
                          {unassignedReservations.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1rem', border: '1px dashed var(--border)', borderRadius: 'var(--radius)' }}>Drop here to unassign</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1rem', border: '1px dashed var(--border)', borderRadius: 'var(--radius)' }}>{t('dropUnassign')}</p>
                          ) : (
                             unassignedReservations.map(res => (
                               <DraggablePatient key={res.id} reservation={res} onDelete={handleDelete} onEdit={handleEdit} />
@@ -346,17 +353,17 @@ const Dashboard = ({ onNavigate }) => {
                {/* Emergency / Quick List Zone */}
                <div className="card" style={{ borderColor: 'var(--danger)' }}>
                   <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <AlertCircle size={16} /> Emergency / Quick List ({emergencyReservations.length})
+                    <AlertCircle size={16} /> {t('emergencyList')} ({emergencyReservations.length})
                   </h3>
-                  <DroppableZone id="emergency-zone" style={{ 
-                      minHeight: '60px', 
-                      borderRadius: 'var(--radius)', 
-                      border: emergencyReservations.length > 0 ? '2px solid transparent' : '2px dashed var(--danger)', 
-                      backgroundColor: 'var(--bg-surface)' 
+                  <DroppableZone id="emergency-zone" style={{
+                      minHeight: '60px',
+                      borderRadius: 'var(--radius)',
+                      border: emergencyReservations.length > 0 ? '2px solid transparent' : '2px dashed var(--danger)',
+                      backgroundColor: 'var(--bg-surface)'
                   }}>
                      <SortableContext items={emergencyReservations.map(r => r.id)} strategy={verticalListSortingStrategy}>
                          {emergencyReservations.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '0.5rem', textAlign: 'center' }}>Drag Emergency Cases Here</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '0.5rem', textAlign: 'center' }}>{t('dragEmergency')}</p>
                          ) : (
                             emergencyReservations.map(res => (
                               <DraggablePatient key={res.id} reservation={res} onDelete={handleDelete} onEdit={handleEdit} onComplete={handleComplete} />
@@ -369,7 +376,7 @@ const Dashboard = ({ onNavigate }) => {
                {/* Completed */}
                <div className="card" style={{ borderColor: 'var(--success)' }}>
                   <h3 style={{ marginBottom: '1rem', color: 'var(--success)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <CheckCircle size={18} /> Completed ({completedReservations.length})
+                      <CheckCircle size={18} /> {t('completed')} ({completedReservations.length})
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
                        {completedReservations.map(res => (
@@ -383,7 +390,7 @@ const Dashboard = ({ onNavigate }) => {
                {/* Archive */}
                <div className="card" style={{ borderColor: 'var(--border)' }}>
                   <h3 style={{ marginBottom: '1rem', color: 'var(--text-main)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <AlertCircle size={18} /> Archive / History ({archivedReservations.length})
+                      <AlertCircle size={18} /> {t('archiveHistory')} ({archivedReservations.length})
                   </h3>
                   <DroppableZone id="archive-zone" style={{ minHeight: '80px', border: '2px dashed var(--border)', borderRadius: 'var(--radius)', padding: '0.5rem', backgroundColor: 'var(--bg-body)' }}>
                       <SortableContext items={archivedReservations.map(r => r.id)} strategy={verticalListSortingStrategy}>
@@ -397,8 +404,8 @@ const Dashboard = ({ onNavigate }) => {
 
             {/* Right Col: Schedule */}
             <div>
-              <ScheduleBoard 
-                reservations={scheduleReservations} 
+              <ScheduleBoard
+                reservations={scheduleReservations}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
                 onQuickAdd={handleQuickAdd}
@@ -412,22 +419,22 @@ const Dashboard = ({ onNavigate }) => {
       {(editingPatient || quickAddSlot) && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
               <div style={{ width: '100%', maxWidth: '500px' }}>
-                  <PatientForm 
-                    initialData={editingPatient || (quickAddSlot ? { timeSlot: quickAddSlot } : null)}  
-                    onSubmit={editingPatient ? handleUpdatePatient : handleAddPatient} 
-                    onCancel={() => { setEditingPatient(null); setQuickAddSlot(null); }} 
+                  <PatientForm
+                    initialData={editingPatient || (quickAddSlot ? { timeSlot: quickAddSlot } : null)}
+                    onSubmit={editingPatient ? handleUpdatePatient : handleAddPatient}
+                    onCancel={() => { setEditingPatient(null); setQuickAddSlot(null); }}
                   />
               </div>
           </div>
       )}
       {cancelModal && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }}>
+           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }}>
               <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
-                  <h3>Reason for Cancellation?</h3>
+                  <h3>{t('reasonCancellation')}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-                      <button className="btn" onClick={() => handleConfirmCancel('Cancelled')}>Cancelled</button>
-                      <button className="btn" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} onClick={() => handleConfirmCancel('No Show')}>No Show</button>
-                      <button className="btn" style={{ marginTop: '0.5rem', color: 'var(--text-muted)' }} onClick={() => setCancelModal(null)}>Back</button>
+                      <button className="btn" onClick={() => handleConfirmCancel('Cancelled')}>{t('cancelled')}</button>
+                      <button className="btn" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} onClick={() => handleConfirmCancel('No Show')}>{t('noShow')}</button>
+                      <button className="btn" style={{ marginTop: '0.5rem', color: 'var(--text-muted)' }} onClick={() => setCancelModal(null)}>{t('back')}</button>
                   </div>
               </div>
           </div>

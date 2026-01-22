@@ -2,9 +2,11 @@ import React, { forwardRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2, Edit, CheckCircle } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 // Dumb component for display (used in list and overlay)
 export const PatientCard = forwardRef(({ reservation, onDelete, onEdit, onComplete, isOverlay, showReason, style, ...props }, ref) => {
+    const { t } = useLanguage();
     return (
         <div
             ref={ref}
@@ -74,10 +76,10 @@ export const PatientCard = forwardRef(({ reservation, onDelete, onEdit, onComple
                     borderRadius: '1rem', 
                     padding: '0.1rem 0.5rem',
                     fontWeight: '700',
-                    marginLeft: '0.5rem',
+                    marginInlineStart: '0.5rem',
                     border: '1px solid var(--danger)'
                 }}>
-                    URGENT
+                    {t('urgent')}
                 </div>
             )}
 
@@ -92,10 +94,10 @@ export const PatientCard = forwardRef(({ reservation, onDelete, onEdit, onComple
                     borderRadius: '1rem', 
                     padding: '0.1rem 0.5rem',
                     fontWeight: '700',
-                    marginLeft: '0.5rem',
+                    marginInlineStart: '0.5rem',
                     border: reservation.status === 'no-show' ? '1px solid #9ca3af' : '1px solid #fb923c'
                 }}>
-                    {reservation.status === 'no-show' ? 'NO SHOW' : 'CANCELLED'}
+                    {reservation.status === 'no-show' ? t('noShowCaps') : t('cancelledCaps')}
                 </div>
             )}
 
@@ -112,7 +114,7 @@ export const PatientCard = forwardRef(({ reservation, onDelete, onEdit, onComple
                       onPointerDown={(e) => { e.stopPropagation(); }}
                       onClick={() => onComplete(reservation.id)}
                       style={{ color: 'var(--success)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}
-                      title="Mark as Complete"
+                      title={t('markComplete')}
                   >
                       <CheckCircle size={16} />
                   </button>
@@ -121,7 +123,7 @@ export const PatientCard = forwardRef(({ reservation, onDelete, onEdit, onComple
                     onPointerDown={(e) => { e.stopPropagation(); }}
                     onClick={() => onEdit && onEdit(reservation)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--text-muted)' }}
-                    title="Edit"
+                    title={t('edit')}
                 >
                     <Edit size={14} />
                 </button>
@@ -129,7 +131,7 @@ export const PatientCard = forwardRef(({ reservation, onDelete, onEdit, onComple
                     onPointerDown={(e) => { e.stopPropagation(); }}
                     onClick={() => onDelete && onDelete(reservation.id)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--danger)' }}
-                    title="Delete"
+                    title={t('delete')}
                 >
                     <Trash2 size={14} />
                 </button>

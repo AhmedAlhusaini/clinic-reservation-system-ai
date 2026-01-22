@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useLanguage } from './LanguageContext';
 
 const ConfigContext = createContext(null);
 
@@ -7,15 +8,24 @@ export const useConfig = () => {
 };
 
 export const ConfigProvider = ({ children }) => {
+    const { t, language } = useLanguage();
+
     // Custom Form Fields
     const [customFields, setCustomFields] = useState(() => {
         const stored = localStorage.getItem('clinic_form_fields');
         return stored ? JSON.parse(stored) : [];
     });
     // Clinic Info
-    const [clinicName, setClinicName] = useState(() => localStorage.getItem('clinic_name') || 'Pediatric Clinic');
+    const [clinicName, setClinicName] = useState(() => localStorage.getItem('clinic_name') || t('defaultClinicName'));
     const [subTitle, setSubTitle] = useState(() => localStorage.getItem('clinic_subtitle') || '');
     const [logo, setLogo] = useState(() => localStorage.getItem('clinic_logo') || null);
+    
+    // Update default name if language changes and no custom name saved
+    useEffect(() => {
+        if (!localStorage.getItem('clinic_name')) {
+            setClinicName(t('defaultClinicName'));
+        }
+    }, [language, t]);
     
     // Schedule Settings (Lazy Init to prevent reset on refresh)
     const [workingDays, setWorkingDays] = useState(() => {
@@ -38,11 +48,24 @@ export const ConfigProvider = ({ children }) => {
     // Default Field Labels
     const [defaultLabels, setDefaultLabels] = useState(() => {
         const stored = localStorage.getItem('clinic_default_labels');
-        return stored ? JSON.parse(stored) : {
-            childName: 'Child Name',
-            parentName: 'Parent Name',
-            phone: 'Phone Number',
-            notes: 'Notes / Diagnosis'
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            // Migration: Check if values are strings (old format) and convert to object
+            if (typeof parsed.childName === 'string') {
+                return {
+                    childName: { en: parsed.childName, ar: 'اسم الطفل' },
+                    parentName: { en: parsed.parentName, ar: 'اسم ولي الأمر' },
+                    phone: { en: parsed.phone, ar: 'رقم الهاتف' },
+                    notes: { en: parsed.notes, ar: 'ملاحظات / التشخيص' }
+                };
+            }
+            return parsed;
+        }
+        return {
+            childName: { en: 'Child Name', ar: 'اسم الطفل' },
+            parentName: { en: 'Parent Name', ar: 'اسم ولي الأمر' },
+            phone: { en: 'Phone Number', ar: 'رقم الهاتف' },
+            notes: { en: 'Notes / Diagnosis', ar: 'ملاحظات / التشخيص' }
         };
     });
 
@@ -176,9 +199,14 @@ export const ConfigProvider = ({ children }) => {
         });
     };
 
-    const updateDefaultLabel = (key, newLabel) => {
+    const updateDefaultLabel = (key, newLabel, lang) => {
         setDefaultLabels(prev => {
-            const next = { ...prev, [key]: newLabel };
+            const currentItem = prev[key];
+            // Ensure currentItem is an object (migration safety)
+            const safeItem = typeof currentItem === 'string' ? { en: currentItem, ar: currentItem } : (currentItem || {});
+            
+            const nextItem = { ...safeItem, [lang]: newLabel };
+            const next = { ...prev, [key]: nextItem };
             localStorage.setItem('clinic_default_labels', JSON.stringify(next));
             return next;
         });

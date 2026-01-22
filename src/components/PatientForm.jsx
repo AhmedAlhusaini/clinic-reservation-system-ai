@@ -3,13 +3,24 @@ import { MapPin, User, Phone, Baby, Sparkles, Calendar, Clock, Loader, AlertCirc
 import { useConfig } from '../context/ConfigContext';
 import { useReservations } from '../context/ReservationContext';
 import { findNextAvailableSlot } from '../utils/scheduler';
+import { useLanguage } from '../context/LanguageContext';
 
 const PatientForm = ({ onSubmit, initialData, onCancel }) => {
   const { customFields, workingDays, startHour, endHour, defaultLabels } = useConfig();
   const { reservations } = useReservations();
+  const { t, language } = useLanguage();
   
   // Determine if we are editing an existing patient or adding a new one
   const isEditMode = initialData && initialData.id;
+
+  // Helper to translate default labels
+  const getLabel = (key) => {
+     const val = defaultLabels?.[key];
+     if (val && typeof val === 'object') {
+         return val[language] || val['en'] || '';
+     }
+     return val || '';
+  };
 
   const [formData, setFormData] = useState({
     childName: '',
@@ -123,22 +134,22 @@ const PatientForm = ({ onSubmit, initialData, onCancel }) => {
   return (
     <div className="card">
       <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: '600' }}>
-          {isEditMode ? 'Edit Patient' : 'Add Patient'}
+          {isEditMode ? t('editPatient') : t('addPatient')}
       </h3>
       <form onSubmit={handleSubmit}>
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr' }}>
           
           <div style={{ gridColumn: '1 / -1' }}>
              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>
-                <Baby size={16} style={{ display: 'inline', marginRight: '0.25rem' }}/> 
-                {defaultLabels?.childName || 'Child Name'}
+                <Baby size={16} style={{ display: 'inline', marginInlineEnd: '0.25rem' }}/> 
+                {getLabel('childName', 'Child Name')}
              </label>
              <input
                 ref={nameInputRef}
                 name="childName"
                 value={formData.childName}
                 onChange={handleChange}
-                placeholder={defaultLabels?.childName || "Child's Full Name"}
+                placeholder={getLabel('childName', 'Child Name')}
                 style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                 required
              />
@@ -146,28 +157,28 @@ const PatientForm = ({ onSubmit, initialData, onCancel }) => {
 
           <div>
              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>
-                <User size={16} style={{ display: 'inline', marginRight: '0.25rem' }}/> 
-                {defaultLabels?.parentName || 'Parent Name'}
+                <User size={16} style={{ display: 'inline', marginInlineEnd: '0.25rem' }}/> 
+                {getLabel('parentName', 'Parent Name')}
              </label>
              <input
                 name="parentName"
                 value={formData.parentName}
                 onChange={handleChange}
-                placeholder={defaultLabels?.parentName || "Parent's Name"}
+                placeholder={getLabel('parentName', 'Parent Name')}
                 style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
              />
           </div>
 
           <div>
              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>
-                <Phone size={16} style={{ display: 'inline', marginRight: '0.25rem' }}/> 
-                {defaultLabels?.phone || 'Phone Number'}
+                <Phone size={16} style={{ display: 'inline', marginInlineEnd: '0.25rem' }}/> 
+                {getLabel('phone', 'Phone Number')}
              </label>
              <input
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="01xxxxxxxxx"
+                placeholder={getLabel('phone', 'Phone Number')}
                 style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                 required
              />
@@ -176,8 +187,8 @@ const PatientForm = ({ onSubmit, initialData, onCancel }) => {
           <div style={{ gridColumn: '1 / -1' }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>
-                    <MapPin size={16} style={{ display: 'inline', marginRight: '0.25rem' }}/> 
-                    Address / Location
+                    <MapPin size={16} style={{ display: 'inline', marginInlineEnd: '0.25rem' }}/> 
+                    {t('address')}
                 </label>
                 {formData.address && (
                     <a 
@@ -186,7 +197,7 @@ const PatientForm = ({ onSubmit, initialData, onCancel }) => {
                         rel="noreferrer"
                         style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none' }}
                     >
-                        Open in Google Maps ↗
+                        {t('openMap')} ↗
                     </a>
                 )}
              </div>
@@ -194,34 +205,29 @@ const PatientForm = ({ onSubmit, initialData, onCancel }) => {
                 name="address"
                 value={formData.address || ''}
                 onChange={handleChange}
-                placeholder="Area, Street..."
+                placeholder={t('addressPlaceholder')}
                 style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
              />
           </div>
 
           <div style={{ gridColumn: '1 / -1' }}>
-             <button
-                type="button"
-                onClick={toggleNotes}
-                style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-             >
-                <FileText size={14} /> {showNotes ? 'Hide Notes' : 'Add Notes / Details'}
+             <div style={{ marginBottom: '1rem' }}>
+             <button type="button" onClick={toggleNotes} className="btn-text" style={{ padding: 0, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                 <FileText size={16} /> 
+                 {showNotes ? t('hideNotes') : `${t('add')} ${getLabel('notes', 'Notes / Diagnosis')}`}
              </button>
              {showNotes && (
-                 <div id="details-section">
-                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>
-                        {defaultLabels?.notes || 'Notes / Diagnosis'}
-                     </label>
-                     <textarea
-                        name="notes"
-                        value={formData.notes || ''}
-                        onChange={handleChange}
-                        placeholder="Enter diagnosis or notes..."
-                        rows={2}
-                        style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontFamily: 'inherit' }}
-                     />
-                 </div>
+                 <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
+                    placeholder={getLabel('notes', 'Notes / Diagnosis')}
+                    rows={3}
+                    className="form-control"
+                    style={{ marginTop: '0.5rem', width: '100%', resize: 'none' }}
+                 />
              )}
+           </div>
           </div>
 
           {/* Custom Fields */}
@@ -240,7 +246,7 @@ const PatientForm = ({ onSubmit, initialData, onCancel }) => {
                         style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                         required={field.required}
                      >
-                         <option value="">Select {field.label}...</option>
+                         <option value="">{t('selectOption')} {field.label}...</option>
                          {field.options && field.options.map((opt, idx) => (
                              <option key={idx} value={opt}>{opt}</option>
                          ))}
@@ -273,10 +279,10 @@ const PatientForm = ({ onSubmit, initialData, onCancel }) => {
 
         <div style={{ marginTop: '1.5rem', textAlign: 'right', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
           {onCancel && (
-              <button type="button" onClick={onCancel} className="btn">Cancel</button>
+              <button type="button" onClick={onCancel} className="btn">{t('cancel')}</button>
           )}
           <button type="submit" className="btn btn-primary">
-            {isEditMode ? 'Update Patient' : ((suggestedSlot || formData.timeSlot) ? `Book ${suggestedSlot?.slot || formData.timeSlot}` : 'Add to Unassigned')}
+            {isEditMode ? t('updatePatient') : ((suggestedSlot || formData.timeSlot) ? `${t('book')} ${suggestedSlot?.slot || formData.timeSlot}` : t('addToUnassigned'))}
           </button>
         </div>
       </form>

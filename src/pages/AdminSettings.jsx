@@ -3,7 +3,8 @@ import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { useReservations } from '../context/ReservationContext';
 import { useToast } from '../context/ToastContext';
-import { Calendar, Trash2, Plus, Save, AlertTriangle, Settings, Users, Key, Clock, Edit, MapPin, Database, XCircle } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+import { Calendar, Trash2, Plus, Save, AlertTriangle, Settings, Users, Key, Clock, Edit, MapPin, Database, XCircle, Globe } from 'lucide-react';
 
 const AdminSettings = ({ initialSection }) => {
     // Auto-scroll effect
@@ -40,6 +41,7 @@ const AdminSettings = ({ initialSection }) => {
   const { user, users, addUser, removeUser, updateUser } = useAuth();
   const { reservations } = useReservations(); // Access all data
   const { showToast } = useToast();
+  const { t, language, changeLanguage } = useLanguage();
   
   const [newFieldLabel, setNewFieldLabel] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -57,10 +59,17 @@ const AdminSettings = ({ initialSection }) => {
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'assistant', expiration: '' });
 
   const allDays = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  const getDayLabel = (d) => {
+      const map = {
+          'sat': 'saturday', 'sun': 'sunday', 'mon': 'monday', 'tue': 'tuesday', 
+          'wed': 'wednesday', 'thu': 'thursday', 'fri': 'friday'
+      };
+      return t(map[d.toLowerCase()] || d.toLowerCase());
+  };
 
   const handleSaveSchedule = () => {
       updateSchedule(days, sHour, eHour, maxP);
-      showToast('Schedule settings saved', 'success');
+      showToast(t('scheduleSaved'), 'success');
   };
 
   const toggleDay = (day) => {
@@ -79,7 +88,7 @@ const AdminSettings = ({ initialSection }) => {
         }
         addUser(newUser);
         setNewUser({ username: '', password: '', role: 'assistant', expiration: '' });
-        showToast('User added', 'success');
+        showToast(t('userAdded'), 'success');
     } else {
          showToast('Username and Password required', 'error');
     }
@@ -89,21 +98,21 @@ const AdminSettings = ({ initialSection }) => {
     if (newFieldLabel.trim()) {
         addField(newFieldLabel);
         setNewFieldLabel('');
-        showToast('Field added', 'success');
+        showToast(t('fieldAdded'), 'success');
     }
   };
 
   const handleUpdateName = () => {
       updateClinicName(nameInput);
       updateSubTitle(subTitleInput);
-      showToast('Clinic details updated', 'success');
+      showToast(t('clinicUpdated'), 'success');
   };
 
   const handleUpdatePassword = () => {
     if (!newPassword) return;
     if (user && user.id) {
         updateUser(user.id, { password: newPassword });
-        showToast('Password updated', 'success');
+        showToast(t('passwordUpdated'), 'success');
         setNewPassword('');
     }
   };
@@ -120,18 +129,49 @@ const AdminSettings = ({ initialSection }) => {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <h2 style={{ marginBottom: '2rem' }}>Settings</h2>
+        <h2 style={{ marginBottom: '2rem' }}>{t('settings')}</h2>
+
+        {/* Language Switcher */}
+        <div className="card" style={{ marginBottom: '2rem' }}>
+            <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Globe size={20} /> {t('language')}
+            </h3>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+                <button 
+                    onClick={() => changeLanguage('en')}
+                    className="btn"
+                    style={{ 
+                        backgroundColor: language === 'en' ? 'var(--primary)' : 'var(--bg-body)',
+                        color: language === 'en' ? 'white' : 'var(--text-main)',
+                        borderColor: language === 'en' ? 'var(--primary)' : 'var(--border)'
+                    }}
+                >
+                    {t('english')}
+                </button>
+                <button 
+                    onClick={() => changeLanguage('ar')}
+                    className="btn"
+                    style={{ 
+                        backgroundColor: language === 'ar' ? 'var(--primary)' : 'var(--bg-body)',
+                        color: language === 'ar' ? 'white' : 'var(--text-main)',
+                        borderColor: language === 'ar' ? 'var(--primary)' : 'var(--border)'
+                    }}
+                >
+                    {t('arabic')}
+                </button>
+            </div>
+        </div>
 
         {/* 0. Branding - OWNER ONLY */}
         {user.role === 'owner' && (
         <div className="card" style={{ marginBottom: '2rem', border: '1px solid var(--primary)' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
-                <Settings size={20} /> Branding (Owner Only)
+                <Settings size={20} /> {t('brandingOwner')}
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
-                        <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Clinic Name:</label>
+                        <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>{t('clinicName')}</label>
                         <input 
                             value={nameInput}
                             onChange={(e) => setNameInput(e.target.value)}
@@ -139,24 +179,24 @@ const AdminSettings = ({ initialSection }) => {
                         />
                     </div>
                     <div>
-                        <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Sub Title (Tagline):</label>
+                        <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>{t('subTitle')}</label>
                         <input 
                             value={subTitleInput}
                             onChange={(e) => setSubTitleInput(e.target.value)}
-                            placeholder="e.g. Dr. Ahmed Elhossainy"
+                            placeholder={t('taglinePlaceholder')}
                             style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                         />
                     </div>
-                    <button onClick={handleUpdateName} className="btn btn-primary" style={{ alignSelf: 'start', marginTop: '1rem' }}>Save Branding</button>
+                    <button onClick={handleUpdateName} className="btn btn-primary" style={{ alignSelf: 'start', marginTop: '1rem' }}>{t('saveBranding')}</button>
                 </div>
                 
                 <div>
-                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Logo:</label>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>{t('logo')}</label>
                      <div style={{ marginBottom: '1rem', padding: '1rem', border: '1px dashed var(--border)', borderRadius: 'var(--radius)', textAlign: 'center', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-body)' }}>
                          {logo ? (
-                             <img src={logo} alt="Current Logo" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
+                             <img src={logo} alt={t('currentLogo')} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
                          ) : (
-                             <span style={{ color: 'var(--text-muted)' }}>No logo uploaded</span>
+                             <span style={{ color: 'var(--text-muted)' }}>{t('noLogo')}</span>
                          )}
                      </div>
                      <input 
@@ -188,10 +228,10 @@ const AdminSettings = ({ initialSection }) => {
         {(user.role === 'owner' || user.role === 'admin') && (
         <div className="card" style={{ marginBottom: '2rem', border: '1px solid var(--secondary)' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--secondary)' }}>
-                <Clock size={20} /> Schedule Configuration
+                <Clock size={20} /> {t('scheduleConfig')}
             </h3>
             <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Working Days:</label>
+                <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>{t('workingDays')}</label>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     {allDays.map(day => (
                         <button 
@@ -204,7 +244,7 @@ const AdminSettings = ({ initialSection }) => {
                                 borderColor: days.includes(day) ? 'var(--secondary)' : 'var(--border)'
                             }}
                         >
-                            {day}
+                            {getDayLabel(day)}
                         </button>
                     ))}
                 </div>
@@ -212,7 +252,7 @@ const AdminSettings = ({ initialSection }) => {
             
             <div style={{ display: 'flex', gap: '2rem', marginBottom: '1rem' }}>
                 <div>
-                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Start Hour:</label>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>{t('startHour')}</label>
                      <input 
                         type="time" 
                         value={sHour}
@@ -221,7 +261,7 @@ const AdminSettings = ({ initialSection }) => {
                      />
                 </div>
                 <div>
-                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>End Hour:</label>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>{t('endHour')}</label>
                      <input 
                         type="time" 
                         value={eHour}
@@ -230,8 +270,8 @@ const AdminSettings = ({ initialSection }) => {
                      />
                 </div>
                 <div>
-                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Max Patients/Slot:</label>
-                     <input 
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>{t('maxPatients')}</label>
+                     <input  
                         type="number" 
                         min="1"
                         max="20"
@@ -243,8 +283,8 @@ const AdminSettings = ({ initialSection }) => {
             </div>
             
             <div style={{ padding: '1rem', border: '1px dashed var(--secondary)', borderRadius: 'var(--radius)', marginBottom: '1rem', backgroundColor: 'var(--bg-surface)' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--secondary)' }}>Exceptions & Overrides</h4>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Manually open or close specific dates (e.g. holidays).</p>
+                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--secondary)' }}>{t('exceptions')}</h4>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{t('manualExceptionTip')}</p>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <input 
                         type="date"
@@ -254,12 +294,12 @@ const AdminSettings = ({ initialSection }) => {
                     <button onClick={() => {
                         const d = document.getElementById('exception-date').value;
                         if(d) updateException(d, 'open');
-                    }} className="btn btn-sm" style={{ fontSize: '0.8rem', backgroundColor: 'var(--success)', color: 'white', border: 'none' }}>Force Open</button>
+                    }} className="btn btn-sm" style={{ fontSize: '0.8rem', backgroundColor: 'var(--success)', color: 'white', border: 'none' }}>{t('forceOpen')}</button>
                     
                     <button onClick={() => {
                         const d = document.getElementById('exception-date').value;
                         if(d) updateException(d, 'closed');
-                    }} className="btn btn-sm" style={{ fontSize: '0.8rem', backgroundColor: 'var(--danger)', color: 'white', border: 'none' }}>Force Close</button>
+                    }} className="btn btn-sm" style={{ fontSize: '0.8rem', backgroundColor: 'var(--danger)', color: 'white', border: 'none' }}>{t('forceClose')}</button>
                 </div>
                 
                 {/* List current exceptions */}
@@ -285,7 +325,7 @@ const AdminSettings = ({ initialSection }) => {
                 className="btn" 
                 style={{ backgroundColor: 'var(--secondary)', color: 'white', border: 'none', width: '100%' }}
             >
-                Save Schedule Settings
+                {t('saveSchedule')}
             </button>
         </div>
         )}
@@ -294,21 +334,21 @@ const AdminSettings = ({ initialSection }) => {
         {(user.role === 'owner' || user.role === 'admin') && (
         <div className="card" style={{ marginBottom: '2rem' }}>
              <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Users size={20} /> User Management
+                <Users size={20} /> {t('userManagement')}
              </h3>
              
              {/* Add User Form - OWNER ONLY */}
              {user.role === 'owner' && (
              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 1fr) minmax(140px, 1fr) auto', gap: '0.75rem', marginBottom: '1.5rem', alignItems: 'center' }}>
                  <input 
-                    placeholder="Username"
+                    placeholder={t('usernamePlaceholder')}
                     value={newUser.username}
                     onChange={e => setNewUser({...newUser, username: e.target.value})}
                     className="form-control"
                     style={{ padding: '0.6rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'white' }}
                  />
                  <input 
-                    placeholder="Password"
+                    placeholder={t('password')}
                     value={newUser.password}
                     onChange={e => setNewUser({...newUser, password: e.target.value})}
                     className="form-control"
@@ -320,9 +360,9 @@ const AdminSettings = ({ initialSection }) => {
                     className="form-select"
                     style={{ padding: '0.6rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'white' }}
                  >
-                     <option value="admin">Admin (Doctor)</option>
-                     <option value="assistant">Assistant</option>
-                     <option value="owner">Owner</option>
+                     <option value="admin">{t('roleAdmin')}</option>
+                     <option value="assistant">{t('roleAssistant')}</option>
+                     <option value="owner">{t('roleOwner')}</option>
                  </select>
                  <input 
                     type="date"
@@ -392,43 +432,50 @@ const AdminSettings = ({ initialSection }) => {
         {(user.role === 'owner' || user.role === 'admin') && (
         <div className="card" style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Edit size={20} /> Standard Field Labels
+                <Edit size={20} /> {t('standardLabels')}
             </h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>Rename the default fields on the patient form.</p>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>{t('renameDefaultFields')}</p>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Child Name Label</label>
-                     <input 
-                        value={defaultLabels.childName}
-                        onChange={(e) => updateDefaultLabel('childName', e.target.value)}
-                        style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
-                     />
-                </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+                 {/* Child Name */}
                  <div>
-                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Parent Name Label</label>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem' }}>{t('childNameLabel')}</label>
                      <input 
-                        value={defaultLabels.parentName}
-                        onChange={(e) => updateDefaultLabel('parentName', e.target.value)}
+                        value={defaultLabels.childName?.[language === 'ar' ? 'ar' : 'en'] || ''}
+                        onChange={(e) => updateDefaultLabel('childName', e.target.value, language === 'ar' ? 'ar' : 'en')}
                         style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                      />
-                </div>
+                 </div>
+
+                 {/* Parent Name */}
                  <div>
-                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Phone Label</label>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem' }}>{t('parentNameLabel')}</label>
                      <input 
-                        value={defaultLabels.phone}
-                        onChange={(e) => updateDefaultLabel('phone', e.target.value)}
+                        value={defaultLabels.parentName?.[language === 'ar' ? 'ar' : 'en'] || ''}
+                        onChange={(e) => updateDefaultLabel('parentName', e.target.value, language === 'ar' ? 'ar' : 'en')}
                         style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                      />
-                </div>
+                 </div>
+
+                 {/* Phone */}
                  <div>
-                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Notes Label</label>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem' }}>{t('phoneLabel')}</label>
                      <input 
-                        value={defaultLabels.notes}
-                        onChange={(e) => updateDefaultLabel('notes', e.target.value)}
+                        value={defaultLabels.phone?.[language === 'ar' ? 'ar' : 'en'] || ''}
+                        onChange={(e) => updateDefaultLabel('phone', e.target.value, language === 'ar' ? 'ar' : 'en')}
                         style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                      />
-                </div>
+                 </div>
+
+                 {/* Notes */}
+                 <div>
+                     <label style={{ fontWeight: '500', display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem' }}>{t('noteLabel')}</label>
+                     <input 
+                        value={defaultLabels.notes?.[language === 'ar' ? 'ar' : 'en'] || ''}
+                        onChange={(e) => updateDefaultLabel('notes', e.target.value, language === 'ar' ? 'ar' : 'en')}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                     />
+                 </div>
             </div>
         </div>
         )}
@@ -437,9 +484,9 @@ const AdminSettings = ({ initialSection }) => {
         {(user.role === 'owner' || user.role === 'admin') && (
         <div className="card" style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Plus size={20} /> Form Editor
+                <Plus size={20} /> {t('formEditor')}
             </h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>Add extra questions to the patient registration form.</p>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>{t('addExtraQuestions')}</p>
             
             {/* Form Editor */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1rem' }}>
@@ -447,31 +494,31 @@ const AdminSettings = ({ initialSection }) => {
                     
                     {/* Label */}
                     <div>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Label</label>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{t('label')}</label>
                         <input 
                             value={newFieldLabel}
                             onChange={(e) => setNewFieldLabel(e.target.value)}
-                            placeholder="E.g. Age"
+                            placeholder={t('labelPlaceholder')}
                             style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                         />
                     </div>
 
                     {/* Type */}
                     <div>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Type</label>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{t('type')}</label>
                          <select
                             id="new-field-type"
                             style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                          >
-                             <option value="text">Text</option>
-                             <option value="number">Number</option>
-                             <option value="select">Dropdown</option>
+                             <option value="text">{t('textType')}</option>
+                             <option value="number">{t('numberType')}</option>
+                             <option value="select">{t('dropdownType')}</option>
                          </select>
                     </div>
 
                     {/* Required */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Required?</label>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{t('required')}</label>
                         <input type="checkbox" id="new-field-required" style={{ marginTop: '0.7rem', transform: 'scale(1.2)' }} />
                     </div>
 
@@ -494,7 +541,7 @@ const AdminSettings = ({ initialSection }) => {
                             document.getElementById('new-field-required').checked = false;
                             document.getElementById('new-field-type').value = 'text';
                         }
-                    }} className="btn btn-primary" style={{ marginBottom: '2px' }}>Add</button>
+                    }} className="btn btn-primary" style={{ marginBottom: '2px' }}>{t('add')}</button>
                 </div>
             </div>
 
@@ -531,22 +578,23 @@ const AdminSettings = ({ initialSection }) => {
         {(user.role === 'owner' || user.role === 'admin') && (
         <div id="database" className="card" style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Database size={20} /> All Patients Database
+                <Database size={20} /> {t('database')}
             </h3>
             
             <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
                  <div style={{ position: 'relative', flex: 1 }}>
                     <input 
                         type="text"
-                        placeholder="Search by Name, Phone, or ID..."
+                        placeholder={t('searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ width: '100%', padding: '0.5rem', paddingRight: '2rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                        style={{ width: '100%', padding: '0.5rem', paddingInlineEnd: '2rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                        dir="auto"
                     />
                     {searchTerm && (
                         <button 
                             onClick={() => setSearchTerm('')}
-                            style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                            style={{ position: 'absolute', insetInlineEnd: '0.5rem', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                         >
                             <XCircle size={16} />
                         </button>
@@ -558,11 +606,11 @@ const AdminSettings = ({ initialSection }) => {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                     <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-surface)', borderBottom: '2px solid var(--border)' }}>
                         <tr>
-                            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Date</th>
-                            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Patient Name</th>
-                            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Phone</th>
-                            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Status</th>
-                            <th style={{ padding: '0.75rem', textAlign: 'left' }}>Location</th>
+                            <th style={{ padding: '0.75rem', textAlign: 'start' }}>{t('date')}</th>
+                            <th style={{ padding: '0.75rem', textAlign: 'start' }}>{t('patientName')}</th>
+                            <th style={{ padding: '0.75rem', textAlign: 'start' }}>{t('phone')}</th>
+                            <th style={{ padding: '0.75rem', textAlign: 'start' }}>{t('status')}</th>
+                            <th style={{ padding: '0.75rem', textAlign: 'start' }}>{t('location')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -605,7 +653,7 @@ const AdminSettings = ({ initialSection }) => {
                                     <td style={{ padding: '0.75rem' }}>
                                         {r.mapsUrl ? (
                                             <a href={r.mapsUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#00b865', textDecoration: 'none', fontWeight: '600', fontSize: '0.85rem' }}>
-                                                <MapPin size={14} /> Open Map
+                                                <MapPin size={14} /> {t('openMap')}
                                             </a>
                                         ) : (
                                             <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</span>
@@ -614,18 +662,18 @@ const AdminSettings = ({ initialSection }) => {
                                 </tr>
                             ))
                         }
-                        {reservations.length === 0 && <tr><td colSpan="5" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No records found.</td></tr>}
+                        {reservations.length === 0 && <tr><td colSpan="5" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>{t('noRecords')}</td></tr>}
                     </tbody>
                 </table>
             </div>
             
             {/* Database Summary */}
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--bg-surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-                 <div style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>Total: {reservations.length}</div>
+                 <div style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{t('total')}: {reservations.length}</div>
                  <div style={{ width: '1px', background: 'var(--border)' }}></div>
-                 <div style={{ color: '#00b865', fontWeight: '500' }}>Completed: {reservations.filter(r => r.status === 'completed').length}</div>
-                 <div style={{ color: '#0090e7', fontWeight: '500' }}>Active: {reservations.filter(r => r.status === 'active' || r.status === 'emergency').length}</div>
-                 <div style={{ color: '#ff4d4f', fontWeight: '500' }}>Cancelled/No-Show: {reservations.filter(r => r.status === 'cancelled' || r.status === 'no-show').length}</div>
+                 <div style={{ color: '#00b865', fontWeight: '500' }}>{t('completed')}: {reservations.filter(r => r.status === 'completed').length}</div>
+                 <div style={{ color: '#0090e7', fontWeight: '500' }}>{t('active')}: {reservations.filter(r => r.status === 'active' || r.status === 'emergency').length}</div>
+                 <div style={{ color: '#ff4d4f', fontWeight: '500' }}>{t('cancelled')}: {reservations.filter(r => r.status === 'cancelled' || r.status === 'no-show').length}</div>
             </div>
         </div>
         )}
@@ -633,39 +681,39 @@ const AdminSettings = ({ initialSection }) => {
         {/* 2. Password Reset */}
         <div className="card" style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Save size={20} /> Update Password
+                <Save size={20} /> {t('updatePassword')}
             </h3>
              <div style={{ display: 'flex', gap: '1rem' }}>
                 <input 
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder={`New password for ${user.username || user.role}`}
                     style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
+                    autoComplete="new-password"
                 />
-                <button onClick={handleUpdatePassword} className="btn">Update</button>
+                <button onClick={handleUpdatePassword} className="btn">{t('update')}</button>
             </div>
         </div>
 
         {/* 3. Danger Zone */}
         <div className="card" style={{ borderColor: 'var(--danger)' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>
-                <AlertTriangle size={20} /> Danger Zone
+                <AlertTriangle size={20} /> {t('dangerZone')}
             </h3>
              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <input 
                     value={deleteConfirmation}
                     onChange={(e) => setDeleteConfirmation(e.target.value)}
-                    placeholder="Type 'delete' to confirm"
+                    placeholder={t('wipeConfirm')}
                     style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
                 />
                 <button 
                     onClick={handleWipeData} 
                     className="btn" 
                     style={{ backgroundColor: 'var(--danger)', color: 'white', border: 'none' }}
-                    disabled={deleteConfirmation.toLowerCase() !== 'delete'}
+                    disabled={deleteConfirmation.toLowerCase() !== t('deleteKeyword').toLowerCase()}
                 >
-                    Wipe Data
+                    {t('wipeData')}
                 </button>
             </div>
         </div>
